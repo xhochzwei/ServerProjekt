@@ -24,7 +24,7 @@ public class VertxWebStatic {
         });
        
         // statische html-Dateien werden über den Dateipfad static ausgeliefert
-        router.route("/static/*").handler(StaticHandler.create());
+        router.route("/static/*").handler(StaticHandler.create().setDefaultContentEncoding("UTF-8"));
         
         // alle Anfragen, die mit /daten beginnen werden von diesem Handler beantwortet
         router.route("/daten").handler(routingContext -> {
