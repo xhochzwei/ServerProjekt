@@ -23,6 +23,27 @@
             <artifactId>vertx-web</artifactId>
             <version>3.5.0</version>
         </dependency>
+        <dependency>
+            <groupId>io.vertx</groupId>
+            <artifactId>vertx-web</artifactId>
+            <version>3.5.0</version>
+            <classifier>client</classifier>
+            <type>js</type>
+        </dependency>
+        <!-- https://mvnrepository.com/artifact/org.webjars/jquery -->
+        <dependency>
+            <groupId>org.webjars</groupId>
+            <artifactId>jquery</artifactId>
+            <version>3.2.1</version>
+        </dependency>
+        <!-- https://mvnrepository.com/artifact/org.webjars/sockjs-client -->
+<dependency>
+    <groupId>org.webjars</groupId>
+    <artifactId>sockjs-client</artifactId>
+    <version>1.1.2</version>
+</dependency>
+
+
 
     </dependencies>
 

@@ -21,6 +21,8 @@ public class VertxWeb {
             response.putHeader("content-type", "text/plain");          
             response.end("Hello World from Vert.x-Web!");
         });
+        
+        
 
         // router::accept akzeptiert eine Anfrage und leitet diese an den Router weiter
         server.requestHandler(router::accept).listen(8080);

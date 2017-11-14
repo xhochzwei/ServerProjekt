@@ -65,6 +65,6 @@ public class VertxWebFormular {
         });
 
         // router::accept akzeptiert eine Anfrage und leitet diese an den Router weiter
-        server.requestHandler(router::accept).listen(8080);
+        server.requestHandler(router::accept).listen(8080,"0.0.0.0");
     }
 }
