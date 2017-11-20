@@ -19,7 +19,7 @@ public class Spieler {
     private int falsch = 0;
     private String[] aktuelleAufgabe = {};
 
-    public Spieler(String name, String id, int anzahlAufgaben) {
+    public Spieler(String name, String id,int anzahlAufgaben) {
         this.name = name;
         this.id = id;
         aufgaben = new int[anzahlAufgaben];
@@ -41,6 +41,15 @@ public class Spieler {
             return -1;
         }
     }
+    
+    public void setAufgaben(int anzahlAufgaben){
+        aufgaben = new int[anzahlAufgaben];
+        for (int i = 0; i < anzahlAufgaben; i++) {
+            aufgaben[i] = i;
+        }
+        restlicheAufgabenZahl = anzahlAufgaben;
+    }
+            
 
     public String getID() {
         return id;

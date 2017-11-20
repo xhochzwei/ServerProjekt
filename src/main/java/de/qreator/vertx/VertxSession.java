@@ -95,13 +95,17 @@ public class VertxSession {
                 vertx.eventBus().send("vertxbeispiel.spielsteuerung", jo);
                 response.end(Json.encodePrettily(jo));
             } else if (typ.equals("starteKnopf") && spielLaeuft == false) {
+                spielLaeuft=true;
                 anzahlAufgaben = Integer.parseInt(routingContext.request().getParam("anzahlAufgaben"));
                 aufgaben = new Aufgaben(anzahlAufgaben);
-                vertx.eventBus().publish("vertxbeispiel.alle", "start");
+                for (Spieler s:spielerListe){
+                    s.setAufgaben(anzahlAufgaben);
+                }
+                
                 jo.put("typ", "bestätigung");
                 jo.put("art", "OK");
                 response.end(Json.encodePrettily(jo));
-                spielLaeuft = true;
+                vertx.eventBus().publish("vertxbeispiel.alle", "start");
             } else if (typ.equals("neuesSpiel")) {
 
                 neuesSpiel();
