@@ -57,7 +57,7 @@ public class VertxDatabase {
 
                 connection = res.result();
                 connection.execute("create table if not exists user(name varchar(20) not null, passwort varchar(20) not null,primary key (name))", handler -> {
-                    connection.execute("insert into user (name,passwort) values('Thomas','geheim')", handler2 -> {
+                    connection.execute("insert into user (name,passwort) values('User','geheim')", handler2 -> {
                         connection.close();
                         System.out.println("Datenbank befüllt");
                     });
