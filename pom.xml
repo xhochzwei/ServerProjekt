@@ -42,7 +42,7 @@
             <artifactId>sockjs-client</artifactId>
             <version>1.1.2</version>
         </dependency>
-                <dependency>
+        <dependency>
             <groupId>io.vertx</groupId>
             <artifactId>vertx-jdbc-client</artifactId>
             <version>3.5.0</version>
@@ -52,7 +52,11 @@
             <artifactId>h2</artifactId>
             <version>1.4.196</version>
         </dependency>
-
+        <dependency>
+            <groupId>ch.qos.logback</groupId>
+            <artifactId>logback-classic</artifactId>
+            <version>1.2.3</version>
+        </dependency>
 
     </dependencies>
 
