@@ -47,7 +47,7 @@ public class VertxDatabase {
 
                 server.requestHandler(router::accept).listen(8080, "0.0.0.0");
             } else {
-                System.out.println("Fehler beim Erstellen der Datenbank!");
+                System.out.println("Folgender Fehler aufgetreten: "+datenbank.cause().getMessage());
             }
         });
     }

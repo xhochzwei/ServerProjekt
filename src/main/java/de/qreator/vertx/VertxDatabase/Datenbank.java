@@ -72,6 +72,8 @@ public class Datenbank {
                             });
                         } else {
                             LOGGER.info("User mit dem Namen " + name + " existiert bereits.");
+                            //erstellenFuture.fail("User existiert bereits!"); 
+                            erstellenFuture.complete();
                         }
                     } else {
                         erstellenFuture.fail(abfrage.cause());
