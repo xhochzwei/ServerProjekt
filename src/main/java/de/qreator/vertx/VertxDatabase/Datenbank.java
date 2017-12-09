@@ -16,15 +16,17 @@ import org.slf4j.LoggerFactory;
 public class Datenbank {
 
     public static final String SQL_NEUE_TABELLE = "create table if not exists user(id int auto_increment,name varchar(20) not null, passwort varchar(20) not null,primary key(name))";
-    public static final String SQL_ÜBERPRÜFE_PASSWORT = "SELECT passwort from user where name=?";
+    public static final String SQL_ÜBERPRÜFE_PASSWORT = "select passwort from user where name=?";
+    public static final String SQL_ÜBERPRÜFE_EXISTENZ_USER = "select name from user where name=?";
 
+    // Logger erzeugen, wobei gilt: TRACE < DEBUG < INFO <  WARN < ERROR
     private static final Logger LOGGER = LoggerFactory.getLogger("de.qreator.vertx.VertxDatabase.Datenbank");
 
     public static JDBCClient dbClient;
 
     public static Future<Void> erstelleDatenbank() {
         Future<Void> erstellenFuture = Future.future();
-
+        LOGGER.info("Datenbank neu anlegen, falls nicht vorhanden.");
         dbClient.getConnection(res -> {
             if (res.succeeded()) {
 
@@ -46,29 +48,46 @@ public class Datenbank {
         return erstellenFuture;
     }
 
-    public static Future<Void> erstelleStandardUser(String name, String passwort) {
+    public static Future<Void> erstelleUser(String name, String passwort) {
         Future<Void> erstellenFuture = Future.future();
 
         dbClient.getConnection(res -> {
             if (res.succeeded()) {
 
                 SQLConnection connection = res.result();
-                connection.execute("insert into user(name,passwort) values('" + name + "','" + passwort + "')", erstellen -> {
-                    if (erstellen.succeeded()) {
-                        erstellenFuture.complete();
+
+                connection.queryWithParams(SQL_ÜBERPRÜFE_EXISTENZ_USER, new JsonArray().add(name), abfrage -> {
+                    if (abfrage.succeeded()) {
+                        List<JsonArray> zeilen = abfrage.result().getResults();
+                        if (zeilen.isEmpty()) { // User existiert noch nicht
+                            LOGGER.info("Erstelle einen User mit dem Namen " + name + " und dem Passwort " + passwort);
+                            connection.execute("insert into user(name,passwort) values('" + name + "','" + passwort + "')", erstellen -> {
+                                if (erstellen.succeeded()) {
+                                    LOGGER.info("User " + name + " erfolgreich erstellt");
+                                    erstellenFuture.complete();
+                                } else {
+                                    LOGGER.info(erstellen.cause().toString());
+                                    erstellenFuture.fail(erstellen.cause());
+                                }
+                            });
+                        } else {
+                            LOGGER.info("User mit dem Namen " + name + " existiert bereits.");
+                        }
                     } else {
-                        LOGGER.info(erstellen.cause().toString());
-                        erstellenFuture.fail(erstellen.cause());
+                        erstellenFuture.fail(abfrage.cause());
                     }
+
                 });
             } else {
                 LOGGER.error("Problem bei der Verbindung zur Datenbank");
+                erstellenFuture.fail(res.cause());
             }
         });
         return erstellenFuture;
     }
 
     public static void überprüfeUser(String name, String passwort, RoutingContext routingContext) {
+        LOGGER.info("Überprüfe, ob der Nutzer " + name + " mit dem Passwort " + passwort + " sich anmelden kann.");
         Future<Void> abfrageFuture = Future.future();
         HttpServerResponse response = routingContext.response();
         response.putHeader("content-type", "application/json");

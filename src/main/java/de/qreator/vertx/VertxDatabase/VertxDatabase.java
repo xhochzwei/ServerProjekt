@@ -21,32 +21,34 @@ public class VertxDatabase {
     public static void main(String[] args) {
         Vertx vertx = Vertx.vertx();
 
-        Future<Void> erstelleDatenbank = Future.future();
-        Future<Void> erstelleUser = Future.future();
-
         JsonObject config = new JsonObject()
                 .put("url", "jdbc:h2:~/datenbank")
                 .put("driver_class", "org.h2.Driver");
 
         Datenbank.dbClient = JDBCClient.createShared(vertx, config);
 
-        Future<Void> startFuture = Datenbank.erstelleDatenbank().compose(db -> Datenbank.erstelleStandardUser("user", "geheim"));
-        startFuture.completer();
+        Future<Void> startFuture = Datenbank.erstelleDatenbank().compose(db -> Datenbank.erstelleUser("user", "geheim"));
 
-        HttpServer server = vertx.createHttpServer();
+        startFuture.setHandler(datenbank -> {
+            if (datenbank.succeeded()) {
+                HttpServer server = vertx.createHttpServer();
 
-        store = LocalSessionStore.create(vertx);
-        sessionHandler = SessionHandler.create(store);
+                store = LocalSessionStore.create(vertx);
+                sessionHandler = SessionHandler.create(store);
 
-        Router router = Router.router(vertx);
+                Router router = Router.router(vertx);
 
-        router.route().handler(CookieHandler.create());
-        router.route().handler(sessionHandler);
-        router.post().handler(BodyHandler.create());
-        router.post("/anfrage").handler(Handler::anfragenHandler);
-        router.route("/static/geheim/*").handler(Handler::geheimeSeiten);
-        router.route("/static/*").handler(StaticHandler.create().setDefaultContentEncoding("UTF-8").setCachingEnabled(false));
+                router.route().handler(CookieHandler.create());
+                router.route().handler(sessionHandler);
+                router.post().handler(BodyHandler.create());
+                router.post("/anfrage").handler(Handler::anfragenHandler);
+                router.route("/static/geheim/*").handler(Handler::geheimeSeiten);
+                router.route("/static/*").handler(StaticHandler.create().setDefaultContentEncoding("UTF-8").setCachingEnabled(false));
 
-        server.requestHandler(router::accept).listen(8080, "0.0.0.0");
+                server.requestHandler(router::accept).listen(8080, "0.0.0.0");
+            } else {
+                System.out.println("Fehler beim Erstellen der Datenbank!");
+            }
+        });
     }
 }
