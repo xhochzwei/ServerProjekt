@@ -10,7 +10,8 @@
     <logger name="io.netty" level="warn"/>
     <logger name="io.vertx" level="info"/>
     <logger name="de.qreator.vertx.VertxDatabase.Datenbank" level="info"/>
-    <logger name="de.qreator.vertx.VertxDatabase.Handler" level="error"/>
+    <logger name="de.qreator.vertx.VertxDatabase.HttpServer" level="error"/>
+    <logger name="de.qreator.vertx.VertxDatabase.Start" level="info"/>
 
     <root level="debug">
         <appender-ref ref="STDOUT"/>
