@@ -8,7 +8,7 @@ import org.slf4j.LoggerFactory;
 
 public class VertxDatabase {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger("de.qreator.vertx.VertxDatabase.start");
+    private static final Logger LOGGER = LoggerFactory.getLogger("de.qreator.vertx.VertxDatabase.Start");
 
     public static void main(String[] args) {
         Vertx vertx = Vertx.vertx();
