@@ -1,6 +1,7 @@
 package de.qreator.vertx.VertxDatabase;
 
 import io.vertx.core.Future;
+import io.vertx.core.eventbus.Message;
 import io.vertx.core.http.HttpServerResponse;
 import io.vertx.core.json.Json;
 import io.vertx.core.json.JsonArray;
@@ -18,11 +19,50 @@ public class Datenbank {
     public static final String SQL_NEUE_TABELLE = "create table if not exists user(id int auto_increment,name varchar(20) not null, passwort varchar(20) not null,primary key(name))";
     public static final String SQL_ÜBERPRÜFE_PASSWORT = "select passwort from user where name=?";
     public static final String SQL_ÜBERPRÜFE_EXISTENZ_USER = "select name from user where name=?";
+    
+      public enum ErrorCodes {
+    KEINE_AKTION,
+    SCHLECHTE_AKTION,
+    DATENBANK_FEHLER
+  }
 
     // Logger erzeugen, wobei gilt: TRACE < DEBUG < INFO <  WARN < ERROR
     private static final Logger LOGGER = LoggerFactory.getLogger("de.qreator.vertx.VertxDatabase.Datenbank");
 
     public static JDBCClient dbClient;
+    
+    
+    public void onMessage(Message<JsonObject> message) {
+
+    if (!message.headers().contains("action")) {
+      LOGGER.error("Keine action-Header übergeben!",
+        message.headers(), message.body().encodePrettily());
+      message.fail(ErrorCodes.KEINE_AKTION.ordinal(), "Keine Aktion im Header übergeben");
+      return;
+    }
+    String action = message.headers().get("action");
+
+    switch (action) {
+      case "all-pages":
+      //  fetchAllPages(message);
+        break;
+      case "get-page":
+       // fetchPage(message);
+        break;
+      case "create-page":
+       // createPage(message);
+        break;
+      case "save-page":
+       // savePage(message);
+        break;
+      case "delete-page":
+       // deletePage(message);
+        break;
+      default:
+        message.fail(ErrorCodes.SCHLECHTE_AKTION.ordinal(), "Schlechte Aktion: " + action);
+    }
+  }
+    
 
     public static Future<Void> erstelleDatenbank() {
         Future<Void> erstellenFuture = Future.future();
@@ -96,37 +136,29 @@ public class Datenbank {
         JsonObject jo = new JsonObject();
         jo.put("typ", "überprüfung");
         Session session = routingContext.session();
-        dbClient.getConnection(res -> {
-            if (res.succeeded()) {
-                SQLConnection connection = res.result();
-                connection.queryWithParams(SQL_ÜBERPRÜFE_PASSWORT, new JsonArray().add(name), abfrage -> {
-                    if (abfrage.succeeded()) {
-                        List<JsonArray> zeilen = abfrage.result().getResults();
-                        if (zeilen.size() == 1) {
-                            String passwortDB = zeilen.get(0).getString(0);
 
-                            if (passwortDB.equals(passwort)) {
-                                session.put("angemeldet", "ja");
-                                jo.put("text", "ok");
-                                LOGGER.info("Anmeldename und Passwort stimmen überein");
-                            } else {
-                                jo.put("text", false);
-                            }
-                        } else {
-                            jo.put("text", false);
-                        }
-                        response.end(Json.encodePrettily(jo));
-                        abfrageFuture.complete();
+        dbClient.queryWithParams(SQL_ÜBERPRÜFE_PASSWORT, new JsonArray().add(name), abfrage -> {
+            if (abfrage.succeeded()) {
+                List<JsonArray> zeilen = abfrage.result().getResults();
+                if (zeilen.size() == 1) {
+                    String passwortDB = zeilen.get(0).getString(0);
+
+                    if (passwortDB.equals(passwort)) {
+                        session.put("angemeldet", "ja");
+                        jo.put("text", "ok");
+                        LOGGER.info("Anmeldename und Passwort stimmen überein");
                     } else {
                         jo.put("text", false);
-                        response.end(Json.encodePrettily(jo));
-                        abfrageFuture.fail(abfrage.cause());
                     }
-                });
+                } else {
+                    jo.put("text", false);
+                }
+                response.end(Json.encodePrettily(jo));
+                abfrageFuture.complete();
             } else {
-                LOGGER.error("Problem bei der Verbindung zur Datenbank");
                 jo.put("text", false);
                 response.end(Json.encodePrettily(jo));
+                abfrageFuture.fail(abfrage.cause());
             }
         });
 
