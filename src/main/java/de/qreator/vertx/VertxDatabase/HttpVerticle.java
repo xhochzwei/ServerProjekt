@@ -80,7 +80,7 @@ public class HttpVerticle extends AbstractVerticle {
         JsonObject jo = new JsonObject();
         Session session = routingContext.session();
 
-        if (typ.equals("angemeldet")) {
+        if (typ.equals("angemeldet")) { 
             LOGGER.info("Anfrage, ob User angemeldet ist.");
             String angemeldet = session.get("angemeldet");
             jo.put("typ", "angemeldet");
