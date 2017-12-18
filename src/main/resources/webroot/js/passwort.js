@@ -47,10 +47,33 @@ $(document).ready(function () {
             }
         );
   $(document).on("click", "#regknopf", function () {
-        $("body").html("Hallo, Sie können sich nun registrieren <br>")
+        $("body").html("Hallo, Sie können sich nun registrieren <br>")     
                 .append("Benutzername: <input type='text' id='regname'/><br>\n")
                 .append("Passwort: <input type='passwort' id='regpasswort1'/><br>\n")
                 .append("Passwort wiederholen: <input type='passwort' id='regpasswort2'/><br>\n")
                 .append("<input type='button' value='registrieren' id='regbestätigung'/>");
+        
     });  
+     $(document).on("click", "#regbestätigung", function () {
+        if ($("#regpasswort1").val() == $("#regpasswort2").val()) {
+            
+          
+             $.post("../anfrage", {
+                typ: "registrierung",
+                regname: $("#regname").val(),
+                passwort: $("#regpasswort1").val()
+     
+            }, function (data){
+                if (data.typ=="registrierung") {
+                    if (data.text=="Benutzer erstellt") {
+                         $("body").append("Ihr Account wurde erstellt")        
+                    }
+                }
+                
+            }
+                    );
+          
+        }
+    });
 });
+

@@ -65,6 +65,9 @@ public class DatenbankVerticle extends AbstractVerticle {
             case "ueberpruefe-passwort":
                 überprüfeUser(message);
                 break;
+            case "erstelleUser2":
+                erstelleNeuenUser(message);
+                break;
 
             default:
                 message.fail(ErrorCodes.SCHLECHTE_AKTION.ordinal(), "Schlechte Aktion: " + action);
@@ -93,6 +96,18 @@ public class DatenbankVerticle extends AbstractVerticle {
         return erstellenFuture;
     }
 
+            
+    private void erstelleNeuenUser(JsonObject message){
+        String passwort = message.getString("pw");
+        String name = message.getString("name");
+        erstelleUser(name, passwort);
+        LOGGER.info("Benutzer erstellt");
+        if (erstellen.succeeded()) {
+            jo.put("typ","hallo");
+        }
+        
+    }
+ 
     private Future<Void> erstelleUser(String name, String passwort) {
         Future<Void> erstellenFuture = Future.future();
 

@@ -116,7 +116,20 @@ public class HttpVerticle extends AbstractVerticle {
                 }
             });
 
-        } else if (typ.equals("logout")) {
+        }
+        else if (typ.equals("registrierung")) {
+            LOGGER.info("daten erhalten");
+            String name=routingContext.request().getParam("regname");
+            String passwort=routingContext.request().getParam("passwort");
+            JsonObject request = new JsonObject().put(name, passwort);
+            DeliveryOptions options = new DeliveryOptions().addHeader("action", "erstelleUser2");
+            vertx.eventBus().send(EB_ADRESSE, request, options, reply -> {
+                if (reply.succeeded) {
+                    jo.put("typ", "registrierung").put("text", "Benutzer erstellt");
+                }
+                });
+        }
+        else if (typ.equals("logout")) {
             LOGGER.info("Logout-Anfrage");
             session.put("angemeldet", null);
             jo.put("typ", "logout");
