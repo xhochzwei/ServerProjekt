@@ -68,6 +68,9 @@ $(document).ready(function () {
                     if (data.text=="Benutzer erstellt") {
                          $("body").append("Ihr Account wurde erstellt")        
                     }
+                if (data.text=="User exists"){
+                    $("body").append("Dieser Benutzer existiert schon")  
+                    }
                 }
                 
             }

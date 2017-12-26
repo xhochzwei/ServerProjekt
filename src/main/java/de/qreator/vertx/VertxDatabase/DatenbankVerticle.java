@@ -16,6 +16,7 @@ public class DatenbankVerticle extends AbstractVerticle {
     private static final String SQL_NEUE_TABELLE = "create table if not exists user(id int auto_increment,name varchar(20) not null, passwort varchar(20) not null,primary key(name))";
     private static final String SQL_ÜBERPRÜFE_PASSWORT = "select passwort from user where name=?";
     private static final String SQL_ÜBERPRÜFE_EXISTENZ_USER = "select name from user where name=?";
+    private static final String USER_EXISTIERT="USER_EXISITIERT";
 
     private static final String EB_ADRESSE = "vertxdatabase.eventbus";
 
@@ -65,7 +66,7 @@ public class DatenbankVerticle extends AbstractVerticle {
             case "ueberpruefe-passwort":
                 überprüfeUser(message);
                 break;
-            case "erstelleUser2":
+            case "erstelleUser":
                 erstelleNeuenUser(message);
                 break;
 
@@ -97,14 +98,20 @@ public class DatenbankVerticle extends AbstractVerticle {
     }
 
             
-    private void erstelleNeuenUser(JsonObject message){
-        String passwort = message.getString("pw");
-        String name = message.getString("name");
-        erstelleUser(name, passwort);
-        LOGGER.info("Benutzer erstellt");
-        if (erstellen.succeeded()) {
-            jo.put("typ","hallo");
-        }
+    private void erstelleNeuenUser(Message<JsonObject> message) {
+        String name = message.body().getString("name");
+        String passwort = message.body().getString("passwort");
+        Future<Void> userErstelltFuture=erstelleUser(name,passwort);
+        userErstelltFuture.setHandler(anfrage->{
+           if (anfrage.succeeded()){
+               
+           } else {
+               String grund=anfrage.cause().toString();
+               if (grund.equals(USER_EXISTIERT)){
+                   
+               }
+           }
+        });
         
     }
  
@@ -134,6 +141,7 @@ public class DatenbankVerticle extends AbstractVerticle {
                             LOGGER.info("User mit dem Namen " + name + " existiert bereits.");
                             //erstellenFuture.fail("User existiert bereits!"); 
                             erstellenFuture.complete();
+
                         }
                     } else {
                         erstellenFuture.fail(abfrage.cause());
