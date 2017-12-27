@@ -124,20 +124,25 @@ public class HttpVerticle extends AbstractVerticle {
             JsonObject request = new JsonObject().put("name", name).put("passwort", passwort);
             DeliveryOptions options = new DeliveryOptions().addHeader("action", "erstelleUser");
             vertx.eventBus().send(EB_ADRESSE, request, options, reply -> {
-              
+              LOGGER.error("TUT nicht");
                 if (reply.succeeded()) {
-            
+                        LOGGER.info("Reg: Datenübermittlung erfolgt");       
                     JsonObject test = (JsonObject) reply.result().body();
                 
-                    if (test.getBoolean("erstellteUser")== true) {
-                        jo.put("registrierung", "Benutzer erstellt");
+                    if (test.getBoolean("REGsuccess")== true) {
+                        jo.put("typ", "bestätigung").put("text", "richtig");
                     }
                     else{
-                        jo.put("registrierung", "User exists");
+                        LOGGER.info("user exists");
+                        jo.put("typ", "bestätigung").put("text", "falsch");
                     }
                      response.end(Json.encodePrettily(jo));
-
-                }});
+                    LOGGER.info("Reg: Datenübermittlung fertig");
+                }
+                else{
+                    LOGGER.error("REG: Datenbankantwort FEHLER");
+                }
+            });
         }
         else if (typ.equals("logout")) {
             LOGGER.info("Logout-Anfrage");

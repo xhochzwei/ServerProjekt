@@ -64,14 +64,15 @@ $(document).ready(function () {
                 passwort: $("#regpasswort1").val()
      
             }, function (data){
-                if (data.typ=="registrierung") {
-                    if (data.text=="Benutzer erstellt") {
+                if (data.typ=="bestätigung") {
+                    if (data.text=="richtig") {
                          $("body").append("Ihr Account wurde erstellt")        
                     }
-                if (data.text=="User exists"){
-                    $("body").append("Dieser Benutzer existiert schon")  
+                    else if (data.text=="falsch"){
+                        $("body").append("Dieser Benutzer existiert schon")  
                     }
-                }
+               
+            }
                 
             }
                     );

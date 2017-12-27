@@ -17,6 +17,7 @@ public class DatenbankVerticle extends AbstractVerticle {
     private static final String SQL_ÜBERPRÜFE_PASSWORT = "select passwort from user where name=?";
     private static final String SQL_ÜBERPRÜFE_EXISTENZ_USER = "select name from user where name=?";
     private static final String USER_EXISTIERT="USER_EXISITIERT";
+    private static boolean test;
 
     private static final String EB_ADRESSE = "vertxdatabase.eventbus";
 
@@ -38,7 +39,7 @@ public class DatenbankVerticle extends AbstractVerticle {
 
         dbClient = JDBCClient.createShared(vertx, config);
 
-        Future<Void> datenbankFuture = erstelleDatenbank().compose(db -> erstelleUser("user", "geheim"));
+        Future<Void> datenbankFuture = erstelleDatenbank(); //.compose(db -> erstelleUser("user", "geheim"));
 
         datenbankFuture.setHandler(db -> {
             if (db.succeeded()) {
@@ -102,17 +103,23 @@ public class DatenbankVerticle extends AbstractVerticle {
         String name = message.body().getString("name");
         String passwort = message.body().getString("passwort");
         Future<Void> userErstelltFuture=erstelleUser(name,passwort);
-        userErstelltFuture.setHandler(anfrage->{
-           if (anfrage.succeeded()){
-               
+        userErstelltFuture.setHandler(reply->{
+           if (reply.succeeded()){
+                LOGGER.info("REG: reply (positive) sent");
+               message.reply(new JsonObject().put("REGsuccess", Boolean.TRUE));
            } else {
-               String grund=anfrage.cause().toString();
-               if (grund.equals(USER_EXISTIERT)){
-                   
+               String grund=reply.cause().toString();
+               if (grund.equals(USER_EXISTIERT)|| test==false){
+                   LOGGER.info("REG: reply (negative) sent");
+                   message.reply(new JsonObject().put("REGsuccess", Boolean.FALSE));
+                   if (test==false) {
+                       LOGGER.info("des falsche");
+                   }
                }
            }
+          
         });
-        
+  
     }
  
     private Future<Void> erstelleUser(String name, String passwort) {
@@ -132,6 +139,7 @@ public class DatenbankVerticle extends AbstractVerticle {
                                 if (erstellen.succeeded()) {
                                     LOGGER.info("User " + name + " erfolgreich erstellt");
                                     erstellenFuture.complete();
+                                   
                                 } else {
                                     LOGGER.info(erstellen.cause().toString());
                                     erstellenFuture.fail(erstellen.cause());
@@ -140,8 +148,9 @@ public class DatenbankVerticle extends AbstractVerticle {
                         } else {
                             LOGGER.info("User mit dem Namen " + name + " existiert bereits.");
                             //erstellenFuture.fail("User existiert bereits!"); 
-                            erstellenFuture.complete();
-
+                            erstellenFuture.fail(USER_EXISTIERT);
+                            test=false;
+                    
                         }
                     } else {
                         erstellenFuture.fail(abfrage.cause());
