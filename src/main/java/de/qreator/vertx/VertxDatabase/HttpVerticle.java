@@ -138,7 +138,6 @@ public class HttpVerticle extends AbstractVerticle {
                      response.end(Json.encodePrettily(jo));
 
                 }});
-         
         }
         else if (typ.equals("logout")) {
             LOGGER.info("Logout-Anfrage");
