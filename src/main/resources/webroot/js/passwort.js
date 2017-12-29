@@ -38,6 +38,7 @@ $(document).ready(function () {
                                 .append("Passwort: <input type='password' id='passwort'/><br>\n")
                                 .append("<input type='button' value='OK' id='anmeldeknopf'/>")
                                 .append("<input type='button' value='registrieren' id='regknopf' />")
+                        
 
                     } else {
                         $("body").html("Gratulation, du bist angemeldet!")
@@ -48,9 +49,10 @@ $(document).ready(function () {
         );
   $(document).on("click", "#regknopf", function () {
         $("body").html("Hallo, Sie können sich nun registrieren <br>")     
-                .append("Benutzername: <input type='text' id='regname'/><br>\n")
-                .append("Passwort: <input type='passwort' id='regpasswort1'/><br>\n")
-                .append("Passwort wiederholen: <input type='passwort' id='regpasswort2'/><br>\n")
+                .append("Benutzername        : <input type='text' id='regname'/><br>\n")
+                .append("Passwort            : <input type='password' id='regpasswort1'/><br>\n")
+                .append("Passwort wiederholen: <input type='password' id='regpasswort2'/><br>\n")
+                .append("Adresse             : <input type='text' id='regadresse'/><br>\n")
                 .append("<input type='button' value='registrieren' id='regbestätigung'/>");
         
     });  
@@ -61,7 +63,8 @@ $(document).ready(function () {
              $.post("../anfrage", {
                 typ: "registrierung",
                 regname: $("#regname").val(),
-                passwort: $("#regpasswort1").val()
+                passwort: $("#regpasswort1").val(),
+                regadresse: $("#regadresse").val()
      
             }, function (data){
                 if (data.typ=="bestätigung") {

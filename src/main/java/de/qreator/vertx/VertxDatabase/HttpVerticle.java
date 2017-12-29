@@ -61,8 +61,10 @@ public class HttpVerticle extends AbstractVerticle {
 
     private void geheimeSeiten(RoutingContext routingContext) {
         LOGGER.info("Router für geheime Seiten");
-        Session session = routingContext.session();
+        Session session = routingContext.session();   
         if (session.get("angemeldet") == null) { // wenn nicht angemeldet, dann Passwort verlangen
+            String name = session.get("name");
+            LOGGER.info(name);
             routingContext.response().setStatusCode(303);
             routingContext.response().putHeader("Location", "/static/passwort.html");
             routingContext.response().end();
@@ -84,9 +86,11 @@ public class HttpVerticle extends AbstractVerticle {
             LOGGER.info("Anfrage, ob User angemeldet ist.");
             String angemeldet = session.get("angemeldet");
             jo.put("typ", "angemeldet");
+            String name = session.get("name");
+            LOGGER.info("name" + name);
             if (angemeldet != null && angemeldet.equals("ja")) {
                 LOGGER.info("User ist angemeldet.");
-                jo.put("text", "ja");
+                function(name);
             } else {
                 LOGGER.info("User ist NICHT angemeldet. Somit Passworteingabe erforderlich");
                 jo.put("text", "nein");
@@ -105,7 +109,8 @@ public class HttpVerticle extends AbstractVerticle {
                     JsonObject body = (JsonObject) reply.result().body();
                     if (body.getBoolean("passwortStimmt") == true) {
                         session.put("angemeldet", "ja");
-                        jo.put("typ", "überprüfung").put("text", "ok");
+                        function(name);
+                        
                     } else {
                         jo.put("typ", "überprüfung").put("text", "nein");
                     }
@@ -115,13 +120,14 @@ public class HttpVerticle extends AbstractVerticle {
                     response.end(Json.encodePrettily(jo));
                 }
             });
-
+            
         }
         else if (typ.equals("registrierung")) {
             LOGGER.info("daten erhalten");
             String name=routingContext.request().getParam("regname");
             String passwort=routingContext.request().getParam("passwort");
-            JsonObject request = new JsonObject().put("name", name).put("passwort", passwort);
+            String adresse = routingContext.request().getParam("regadresse");
+            JsonObject request = new JsonObject().put("name", name).put("passwort", passwort).put("adresse", adresse);
             DeliveryOptions options = new DeliveryOptions().addHeader("action", "erstelleUser");
             vertx.eventBus().send(EB_ADRESSE, request, options, reply -> {
               LOGGER.error("TUT nicht");
@@ -149,6 +155,20 @@ public class HttpVerticle extends AbstractVerticle {
             session.put("angemeldet", null);
             jo.put("typ", "logout");
             response.end(Json.encodePrettily(jo));
+            jo.put("typ", "überprüfung").put("text", "ok");
         }
+    }
+
+    private void function(String name) {
+        
+                   JsonObject request2 = new JsonObject().put("name", name);
+            DeliveryOptions options2 = new DeliveryOptions().addHeader("action", "getFunction");
+            vertx.eventBus().send(EB_ADRESSE,request2, options2, reply -> {
+                if (reply.succeeded()) {
+                    JsonObject func = (JsonObject) reply.result().body();
+                    
+                }
+ 
+            });
     }
 }
