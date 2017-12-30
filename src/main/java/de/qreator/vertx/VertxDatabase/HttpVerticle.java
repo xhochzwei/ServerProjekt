@@ -32,6 +32,7 @@ public class HttpVerticle extends AbstractVerticle {
     private int port = 8080;
     private static final Logger LOGGER = LoggerFactory.getLogger("de.qreator.vertx.VertxDatabase.HttpServer");
     private static final String EB_ADRESSE = "vertxdatabase.eventbus";
+    private static int money;
 
     public void start(Future<Void> startFuture) throws Exception {
 
@@ -81,16 +82,18 @@ public class HttpVerticle extends AbstractVerticle {
         response.putHeader("content-type", "application/json");
         JsonObject jo = new JsonObject();
         Session session = routingContext.session();
-
+        
         if (typ.equals("angemeldet")) { 
             LOGGER.info("Anfrage, ob User angemeldet ist.");
             String angemeldet = session.get("angemeldet");
+           
             jo.put("typ", "angemeldet");
             String name = session.get("name");
             LOGGER.info("name" + name);
             if (angemeldet != null && angemeldet.equals("ja")) {
                 LOGGER.info("User ist angemeldet.");
-                function(name);
+       
+               jo.put("text", "ja");
             } else {
                 LOGGER.info("User ist NICHT angemeldet. Somit Passworteingabe erforderlich");
                 jo.put("text", "nein");
@@ -108,8 +111,10 @@ public class HttpVerticle extends AbstractVerticle {
                 if (reply.succeeded()) {
                     JsonObject body = (JsonObject) reply.result().body();
                     if (body.getBoolean("passwortStimmt") == true) {
-                        session.put("angemeldet", "ja");
-                        function(name);
+                        session.put("angemeldet", "ja").put("name", name);
+                        
+                      
+                        jo.put("typ", "überprüfung").put("text", "ok");
                         
                     } else {
                         jo.put("typ", "überprüfung").put("text", "nein");
@@ -122,6 +127,45 @@ public class HttpVerticle extends AbstractVerticle {
             });
             
         }
+        else if (typ.equals("function")){
+            LOGGER.info("überprüfe Funktion");
+            String name = session.get("name");
+            JsonObject request = new JsonObject().put("name", name);
+            DeliveryOptions options = new DeliveryOptions().addHeader("action", "getFunction");
+            vertx.eventBus().send(EB_ADRESSE,request,options, reply ->{
+                if (reply.succeeded()) {
+                   JsonObject func = (JsonObject) reply.result().body(); 
+                   String function = func.getString("function");
+                   LOGGER.info("Der User " + name + " hat die Function: " + function);
+                  // jo.put("typ", "überprüfeFUNC")
+                           jo.put("function", function);
+                   response.end(Json.encodePrettily(jo));
+                }
+                else{
+                    LOGGER.error("Fehler bei der Funktionsüberprüfung"+ reply.cause());
+                }
+                
+            });
+        }
+        else if(typ.equals("Geld")){
+            LOGGER.info("Kontostand wird überprüft");
+            String name = routingContext.request().getParam("Kontoname");
+            JsonObject request = new JsonObject().put("name", name);
+            DeliveryOptions options = new DeliveryOptions().addHeader("action", "getKonto");
+            vertx.eventBus().send(EB_ADRESSE, request, options, reply -> {
+                if (reply.succeeded()) {
+                    JsonObject dbkonto = (JsonObject) reply.result().body();
+                    String konto = dbkonto.getString("konto");
+                    jo.put("konto", konto);
+                     response.end(Json.encodePrettily(jo));
+                }
+                else{
+                    jo.put("konto", "fehler"); 
+                    LOGGER.error("" + reply.cause());
+                response.end(Json.encodePrettily(jo));
+                }
+            });
+        }
         else if (typ.equals("registrierung")) {
             LOGGER.info("daten erhalten");
             String name=routingContext.request().getParam("regname");
@@ -130,7 +174,7 @@ public class HttpVerticle extends AbstractVerticle {
             JsonObject request = new JsonObject().put("name", name).put("passwort", passwort).put("adresse", adresse);
             DeliveryOptions options = new DeliveryOptions().addHeader("action", "erstelleUser");
             vertx.eventBus().send(EB_ADRESSE, request, options, reply -> {
-              LOGGER.error("TUT nicht");
+              
                 if (reply.succeeded()) {
                         LOGGER.info("Reg: Datenübermittlung erfolgt");       
                     JsonObject test = (JsonObject) reply.result().body();
@@ -152,23 +196,26 @@ public class HttpVerticle extends AbstractVerticle {
         }
         else if (typ.equals("logout")) {
             LOGGER.info("Logout-Anfrage");
-            session.put("angemeldet", null);
+            session.put("angemeldet", null).put("name", null);
+            
             jo.put("typ", "logout");
             response.end(Json.encodePrettily(jo));
             jo.put("typ", "überprüfung").put("text", "ok");
         }
+    
     }
-
-    private void function(String name) {
+   private void  function(String name) {
         
                    JsonObject request2 = new JsonObject().put("name", name);
             DeliveryOptions options2 = new DeliveryOptions().addHeader("action", "getFunction");
             vertx.eventBus().send(EB_ADRESSE,request2, options2, reply -> {
                 if (reply.succeeded()) {
                     JsonObject func = (JsonObject) reply.result().body();
-                    
+                    money = func.getInteger("function");
+                  
                 }
  
             });
     }
+ 
 }

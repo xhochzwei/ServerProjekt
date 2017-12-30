@@ -9,6 +9,38 @@ $(document).ready(function () {
             }
         })
     });
+    $(document).on("click", "#funct", function () {
+         $.post("../anfrage", {
+            typ: "function",
+        }, function(data){
+        
+                if (data.function == '["user"]') {
+                            $("body").append("<br>Sie haben leider nicht die nötige Berechtigung für die Aktion<br>")
+                }
+                if (data.function == '["admin"]') {
+                    $("body").html("Herzlich Willkommen auf der Admin Seite<br>")
+                            .append("Überprüfe den Kontostand eines Benutzer: <br><input type='text' value='name' id='Adminname'/>")
+                            .append("<input type='button' value='OK' id='geld'/>")
+                            .append("<br> OUTPUT:");
+                }
+       
+        }
+    );
+    });
+   $(document).on("click", "#geld", function () {    
+             $.post("../anfrage", {
+                typ: "Geld",
+                Kontoname: $("#Adminname").val()
+            }, function (data){
+               var geld = data.konto
+                $("body").append("<br>Der Kontostand beträgt: " + geld);
+                
+            
+                
+            }
+                    );
+          
+        });
     $(document).on("click", "#anmeldeknopf", function () {
         $.post("../anfrage", {
             typ: "anmeldedaten",
@@ -18,6 +50,7 @@ $(document).ready(function () {
             if (data.typ == "überprüfung") {
                 if (data.text == "ok") {
                     $("body").html("Gratulation, du bist angemeldet!")
+                            .append("<br><input type='button' value='Admin' id='funct'/>")
                             .append("<br><input type='button' value='logout' id='logout'/>");
                 } else {
                     $("body").append("<br>Die Anmeldedaten waren leider falsch!");
