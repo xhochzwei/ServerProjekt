@@ -76,8 +76,11 @@ public class HttpVerticle extends AbstractVerticle {
     }
 
     private void anfragenHandler(RoutingContext routingContext) {
+        
         LOGGER.info("Router für Anfragen");
         String typ = routingContext.request().getParam("typ");
+        String typ2 = routingContext.request().getParam("typ2");
+        String typ3 = routingContext.request().getParam("typ3");
         HttpServerResponse response = routingContext.response();
         response.putHeader("content-type", "application/json");
         JsonObject jo = new JsonObject();
@@ -128,25 +131,44 @@ public class HttpVerticle extends AbstractVerticle {
             
         }
         else if (typ.equals("function")){
-            LOGGER.info("überprüfe Funktion");
             String name = session.get("name");
+            jo.put("name", name);
             JsonObject request = new JsonObject().put("name", name);
-            DeliveryOptions options = new DeliveryOptions().addHeader("action", "getFunction");
-            vertx.eventBus().send(EB_ADRESSE,request,options, reply ->{
+            DeliveryOptions function2 = new DeliveryOptions().addHeader("action", "getFunction");
+            vertx.eventBus().send(EB_ADRESSE, request,function2, reply ->{
                 if (reply.succeeded()) {
-                   JsonObject func = (JsonObject) reply.result().body(); 
-                   String function = func.getString("function");
-                   LOGGER.info("Der User " + name + " hat die Function: " + function);
-                  // jo.put("typ", "überprüfeFUNC")
-                           jo.put("function", function);
-                   response.end(Json.encodePrettily(jo));
+                    JsonObject dbfunction = (JsonObject) reply.result().body();
+                    String func = dbfunction.getString("function");
+                    jo.put("function", func);
+                       
+                    
                 }
-                else{
-                    LOGGER.error("Fehler bei der Funktionsüberprüfung"+ reply.cause());
+            });
+            JsonObject request2 = new JsonObject().put("name", name);
+            DeliveryOptions konto2 = new DeliveryOptions().addHeader("action", "getKonto");
+            vertx.eventBus().send(EB_ADRESSE, request2,konto2, reply ->{
+                if (reply.succeeded()) {
+                    JsonObject dbkonto = (JsonObject) reply.result().body();
+                    String knt = dbkonto.getString("konto");
+                    jo.put("konto", knt);
+                       
+                    
                 }
-                
+            });
+                        JsonObject REadr = new JsonObject().put("name", name);
+            DeliveryOptions adr2 = new DeliveryOptions().addHeader("action", "getAdresse");
+            vertx.eventBus().send(EB_ADRESSE, REadr,adr2, reply ->{
+                if (reply.succeeded()) {
+                    JsonObject dbkonto = (JsonObject) reply.result().body();
+                    String adre = dbkonto.getString("adresse");
+                    jo.put("adresse", adre);
+                       response.end(Json.encodePrettily(jo));
+                    
+                }
             });
         }
+    
+        
         else if(typ.equals("Geld")){
             LOGGER.info("Kontostand wird überprüft");
             String name = routingContext.request().getParam("Kontoname");
@@ -165,7 +187,7 @@ public class HttpVerticle extends AbstractVerticle {
                 response.end(Json.encodePrettily(jo));
                 }
             });
-        }
+                }
         else if (typ.equals("registrierung")) {
             LOGGER.info("daten erhalten");
             String name=routingContext.request().getParam("regname");
@@ -204,18 +226,6 @@ public class HttpVerticle extends AbstractVerticle {
         }
     
     }
-   private void  function(String name) {
-        
-                   JsonObject request2 = new JsonObject().put("name", name);
-            DeliveryOptions options2 = new DeliveryOptions().addHeader("action", "getFunction");
-            vertx.eventBus().send(EB_ADRESSE,request2, options2, reply -> {
-                if (reply.succeeded()) {
-                    JsonObject func = (JsonObject) reply.result().body();
-                    money = func.getInteger("function");
-                  
-                }
- 
-            });
-    }
+
  
 }

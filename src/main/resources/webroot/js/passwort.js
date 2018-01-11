@@ -10,12 +10,22 @@ $(document).ready(function () {
         })
     });
     $(document).on("click", "#funct", function () {
-         $.post("../anfrage", {
+        $.post("../anfrage", {
             typ: "function",
-        }, function(data){
         
+            
+        },
+        
+        function(data){
+     
                 if (data.function == '["user"]') {
-                            $("body").append("<br>Sie haben leider nicht die nötige Berechtigung für die Aktion<br>")
+                    var konto = data.konto;
+                    var name = data.name;
+                    var adresse = data.adresse;
+                            $("body").html("Einstellungen:<br>")
+                                    .append("Name: " + name + "<br>" )
+                                    .append("Adresse: " + adresse + "<br>" )
+                                    .append("Kontostand: " + konto +"€ <br>");
                 }
                 if (data.function == '["admin"]') {
                     $("body").html("Herzlich Willkommen auf der Admin Seite<br>")
@@ -50,7 +60,7 @@ $(document).ready(function () {
             if (data.typ == "überprüfung") {
                 if (data.text == "ok") {
                     $("body").html("Gratulation, du bist angemeldet!")
-                            .append("<br><input type='button' value='Admin' id='funct'/>")
+                            .append("<br><input type='button' value='Einstellungen' id='funct'/>")
                             .append("<br><input type='button' value='logout' id='logout'/>");
                 } else {
                     $("body").append("<br>Die Anmeldedaten waren leider falsch!");

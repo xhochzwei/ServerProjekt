@@ -11,22 +11,23 @@ import io.vertx.ext.sql.ResultSet;
 import io.vertx.ext.sql.SQLConnection;
 import io.vertx.ext.sql.SQLRowStream;
 import java.util.List;
+import javafx.scene.chart.XYChart.Series;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class DatenbankVerticle extends AbstractVerticle {
 
-    private static final String SQL_NEUE_TABELLE = "create table if not exists user(id int auto_increment,name varchar(20) not null, passwort varchar(20) not null,adresse varchar(20) not null,money int not null,function varchar(20) not null,primary key(name))";
-    private static final String SQL_ÜBERPRÜFE_PASSWORT = "select passwort from user where name=?";
-    private static final String SQL_ÜBERPRÜFE_EXISTENZ_USER = "select name from user where name=?";
-    private static final String SQL_ÜBERPRÜFE_FUNCTION = "select function from user where name =?";
-    private static final String SQL_ÜBERPRÜFE_KONTO = "select money from user where name =?";
-    private static final String SQL_DELETE = "drop table user";
+    private static final String SQL_NEUE_TABELLE_SHOP =         "create table if not exists items(id int auto_increment, name varchar(20) not null, preis int not null";
+    private static final String SQL_NEUE_TABELLE =              "create table if not exists user(id int auto_increment,name varchar(20) not null, passwort varchar(20) not null,adresse varchar(20) not null,money int not null,function varchar(20) not null,primary key(name))";
+    private static final String SQL_ÜBERPRÜFE_PASSWORT =        "select passwort from user where name=?";
+    private static final String SQL_ÜBERPRÜFE_EXISTENZ_USER =   "select name from user where name=?";
+    private static final String SQL_ÜBERPRÜFE_FUNCTION =        "select function from user where name =?";
+    private static final String SQL_ÜBERPRÜFE_KONTO =           "select money from user where name =?";
+    private static final String SQL_ÜBERPRÜFE_ADRESSE =         "select adresse from user where name =?";
+    private static final String SQL_DELETE =                    "drop table user";
     private static final String USER_EXISTIERT = "USER_EXISITIERT";
 
     private static final String EB_ADRESSE = "vertxdatabase.eventbus";
-
-   
 
     private enum ErrorCodes {
         KEINE_AKTION,
@@ -43,24 +44,26 @@ public class DatenbankVerticle extends AbstractVerticle {
         JsonObject config = new JsonObject()
                 .put("url", "jdbc:h2:~/datenbank")
                 .put("driver_class", "org.h2.Driver");
-        
 
         dbClient = JDBCClient.createShared(vertx, config);
        
+
         Future<Void> datenbankFuture = erstelleDatenbank(); //.compose(db -> erstelleUser("user", "geheim"));
-        
+
         datenbankFuture.setHandler(db -> {
             if (db.succeeded()) {
                 LOGGER.info("Datenbank initialisiert");
                 vertx.eventBus().consumer(EB_ADRESSE, this::onMessage);
+                erstelleUser("Admin", "passwort", "unknown", "admin", 9999);
+                erstelleUser("test", "passwort", "unknown", "user", 25);
+                
                 startFuture.complete();
             } else {
                 LOGGER.info("Probleme beim Initialisieren der Datenbank");
                 startFuture.fail(db.cause());
             }
         });
-        erstelleUser("Admin", "passwort", "unknown", "admin" , 9999 );
-        erstelleUser("test", "passwort", "unknown", "user" , 25);
+        
     }
 
     public void onMessage(Message<JsonObject> message) {
@@ -86,43 +89,43 @@ public class DatenbankVerticle extends AbstractVerticle {
             case "getKonto":
                 getKonto(message);
                 break;
+            case "getAdresse":
+                getAdresse(message);
+                break;
 
             default:
                 message.fail(ErrorCodes.SCHLECHTE_AKTION.ordinal(), "Schlechte Aktion: " + action);
         }
     }
-    
+
     private void löscheDatenbank() {
-         
-        dbClient.getConnection(res ->{
+
+        dbClient.getConnection(res -> {
             if (res.succeeded()) {
                 SQLConnection connection = res.result();
-                 connection.execute(SQL_DELETE, löschen ->{
-                if (löschen.succeeded()) {
-                    LOGGER.info("Datenbank erfolgreich gelöscht");
-                  
-                   
-                }
-                else{
-                    LOGGER.error("Löschen der Datenbank fehlgeschlagen " + löschen.cause());
-                   
-                }
-                 });
+                connection.execute(SQL_DELETE, löschen -> {
+                    if (löschen.succeeded()) {
+                        LOGGER.info("Datenbank erfolgreich gelöscht");
+
+                    } else {
+                        LOGGER.error("Löschen der Datenbank fehlgeschlagen " + löschen.cause());
+
+                    }
+                });
             }
-  
+
         });
     }
-    
+
     private Future<Void> erstelleDatenbank() {
-        
+
         Future<Void> erstellenFuture = Future.future();
         LOGGER.info("Datenbank neu anlegen, falls nicht vorhanden.");
         dbClient.getConnection(res -> {
             if (res.succeeded()) {
-                
+
                 SQLConnection connection = res.result();
-               
-           
+
                 connection.execute(SQL_NEUE_TABELLE, erstellen -> {
                     if (erstellen.succeeded()) {
                         erstellenFuture.complete();
@@ -137,7 +140,7 @@ public class DatenbankVerticle extends AbstractVerticle {
         });
         return erstellenFuture;
     }
-   
+
     private void erstelleNeuenUser(Message<JsonObject> message) {
         String name = message.body().getString("name");
         String passwort = message.body().getString("passwort");
@@ -164,56 +167,72 @@ public class DatenbankVerticle extends AbstractVerticle {
         });
     }
 
-  private void getKonto(Message<JsonObject> message){
+    private void getKonto(Message<JsonObject> message) {
         String name = message.body().getString("name");
-        LOGGER.info("KONTO: Datenbank überprüft Kontostand von " + name);
-        dbClient.getConnection((AsyncResult<SQLConnection> res) -> {
+        dbClient.getConnection(res -> {
             if (res.succeeded()) {
-           SQLConnection connection = res.result();
-           connection.queryStreamWithParams(SQL_ÜBERPRÜFE_KONTO, new JsonArray().add(name), abfrage ->{
-               if (abfrage.succeeded()) {
-                   List<JsonArray> zeilen = abfrage.result().getResults();
-                   if (zeilen.isEmpty()) {
-                       LOGGER.error("KONTO: Diesen User gibt es nicht");
-                   }
-                   else{
-                       String Konto = zeilen.get(0).toString();
-                       message.reply(new JsonObject().put("konto", Konto));
-                   }
-                   
-               }
- 
-           });
-        }});
-    }
+                SQLConnection connection = res.result();
+                connection.querySingleWithParams(SQL_ÜBERPRÜFE_KONTO, new JsonArray().add(name), abfrage -> {
+                    if (abfrage.succeeded()) {
+                        String zeilen = abfrage.result().toString();
+                       
+                            message.reply(new JsonObject().put("konto", zeilen));
+                            LOGGER.info("KONTO: Der Kontostand von " + name + " beträgt " + zeilen);
+                            
+                        
 
+                    }
+
+                });
+            } else {
+                LOGGER.error("KONTO: Fehler bei der Verbindung mit der Datenbank: " + res.cause());
+            }
+        });
+    }
+    private void getAdresse(Message<JsonObject> message) {
+        String name = message.body().getString("name");
+        dbClient.getConnection(res -> {
+            if (res.succeeded()) {
+                SQLConnection connection = res.result();
+                connection.querySingleWithParams(SQL_ÜBERPRÜFE_ADRESSE, new JsonArray().add(name), abfrage -> {
+                    if (abfrage.succeeded()) {
+                        String zeilen = abfrage.result().toString();
+
+                            message.reply(new JsonObject().put("adresse", zeilen));
+                            LOGGER.info("ADRESSE: Die Adresse von " + name + " ist " + zeilen);
+                    }
+
+                });
+            } else {
+                LOGGER.error("ADRESSE: Fehler bei der Verbindung mit der Datenbank: " + res.cause());
+            }
+        });
+    }
     private void getFunction(Message<JsonObject> message) {
         String name = message.body().getString("name");
         dbClient.getConnection(res -> {
             if (res.succeeded()) {
                 SQLConnection connection = res.result();
                 connection.querySingleWithParams(SQL_ÜBERPRÜFE_FUNCTION, new JsonArray().add(name), abfrage -> {
-                    
+
                     if (abfrage.succeeded()) {
-                       List<JsonArray>zeilen=abfrage.result().getResults();
+                        String zeilen = abfrage.result().toString();
                         if (zeilen.isEmpty()) {
                             LOGGER.error("FUNC: Diesen User gibt es nicht");
-                        }
-                        else{
-                            int function = zeilen.get(0).getInteger(0);
+                        } else {
+                            String function = zeilen;//.get(0).toString();
                             message.reply(new JsonObject().put("function", function));
-                        }       
-                    }
-                    else{
+                        }
+                    } else {
                         LOGGER.error("FUNC: Antwortfehler");
                     }
- 
+
                 });
+
             }
- 
+
         });
     }
- 
 
     private Future<Void> erstelleUser(String name, String passwort, String adresse, String function, Integer money) {
 
@@ -226,7 +245,8 @@ public class DatenbankVerticle extends AbstractVerticle {
 
                 connection.queryWithParams(SQL_ÜBERPRÜFE_EXISTENZ_USER, new JsonArray().add(name), abfrage -> {
                     if (abfrage.succeeded()) {
-                        List<JsonArray> zeilen = abfrage.result().getResults();
+                        LOGGER.error("jetzt kommt der 1. fehler");
+                        List<JsonArray> zeilen = abfrage.result().getResults();       
                         if (zeilen.isEmpty()) { // User existiert noch nicht
                             LOGGER.info("Erstelle einen User mit dem Namen " + name + " und dem Passwort " + passwort);
                             connection.execute("insert into user(name,passwort,adresse,money,function) values('" + name + "','" + passwort + "','" + adresse + "','" + money + "','" + function + "')", erstellen -> {
@@ -257,7 +277,7 @@ public class DatenbankVerticle extends AbstractVerticle {
         });
         return erstellenFuture;
     }
-    
+
     private void überprüfeUser(Message<JsonObject> message) {
 
         String name = message.body().getString("name");
