@@ -23,9 +23,11 @@ $(document).ready(function () {
                     var name = data.name;
                     var adresse = data.adresse;
                             $("body").html("Einstellungen:<br>")
-                                    .append("Name: " + name + "<br>" )
-                                    .append("Adresse: " + adresse + "<br>" )
-                                    .append("Kontostand: " + konto +"€ <br>");
+                                    .append("<br> Name: " + name)
+                                    .append("<br> Adresse: " + adresse)
+                                    .append("<input type='text' value='' id='AEadr'/>")
+                                    .append("  <input type='button' value='ändern' id='AEgo'/>")
+                                    .append("<br> Kontostand: " + konto +"€");
                 }
                 if (data.function == '["admin"]') {
                     $("body").html("Herzlich Willkommen auf der Admin Seite<br>")
@@ -37,18 +39,33 @@ $(document).ready(function () {
         }
     );
     });
+       $(document).on("click", "#AEgo", function () {    
+           $.post("../anfrage", {
+                typ: "AEadresse",
+                Adresse: $("#AEadr").val()
+            },
+             function(data){
+                
+                  $("body").append("<br> OUTPUT: ")
+                  if(data.text == "richtig"){
+                    if (data.CHANGEadresse == "erfolgreich") {
+                               $("body").append("<br> Adresse wurde erfolgreich geändert!")
+                    }
+                    else{
+                        $("body").append("<br> Es ist ein Fehler aufgetreten. Versuchen Sie es nochmal!")
+                    }
+                }
+           
+            });
+       });
    $(document).on("click", "#geld", function () {    
              $.post("../anfrage", {
                 typ: "Geld",
                 Kontoname: $("#Adminname").val()
             }, function (data){
                var geld = data.konto
-                $("body").append("<br>Der Kontostand beträgt: " + geld);
-                
-            
-                
-            }
-                    );
+                $("body").append("<br>Der Kontostand beträgt: " + geld);    
+            });
           
         });
     $(document).on("click", "#anmeldeknopf", function () {

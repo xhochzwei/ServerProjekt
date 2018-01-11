@@ -29,6 +29,8 @@ public class DatenbankVerticle extends AbstractVerticle {
 
     private static final String EB_ADRESSE = "vertxdatabase.eventbus";
 
+    
+
     private enum ErrorCodes {
         KEINE_AKTION,
         SCHLECHTE_AKTION,
@@ -92,6 +94,8 @@ public class DatenbankVerticle extends AbstractVerticle {
             case "getAdresse":
                 getAdresse(message);
                 break;
+            case "changeAdresse":
+                uptAdresse(message);
 
             default:
                 message.fail(ErrorCodes.SCHLECHTE_AKTION.ordinal(), "Schlechte Aktion: " + action);
@@ -306,4 +310,26 @@ public class DatenbankVerticle extends AbstractVerticle {
             }
         });
     }
+private void uptAdresse(Message<JsonObject> message){
+    LOGGER.info("Adresse wird geändert");
+    String name = message.body().getString("name");
+    String adresse = message.body().getString("adresse");
+    LOGGER.info(adresse);
+    dbClient.getConnection(res -> {
+            if (res.succeeded()) {
+
+                SQLConnection connection = res.result();
+                connection.execute("update user set adresse = " + "'" + adresse + "'" +  " where name = "+ "'" + name + "'" + "", change -> {
+                    if (change.succeeded()) {
+                        message.reply(new JsonObject().put("changeAdresseControl", "es tut"));
+                        LOGGER.info("ADRESSE: erfolgreich");
+                    }
+                    else{
+                         message.reply(new JsonObject().put("changeAdresseControl", Boolean.FALSE));
+                         LOGGER.error("" + change.cause());
+                    }
+                });
+            }
+    });
+}
 }

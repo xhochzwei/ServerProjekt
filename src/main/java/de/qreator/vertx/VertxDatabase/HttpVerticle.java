@@ -168,7 +168,28 @@ public class HttpVerticle extends AbstractVerticle {
             });
         }
     
-        
+        else if (typ.equals("AEadresse")){
+            LOGGER.info("Adresse wird geändert");
+            String name = session.get("name");
+            String adresse = routingContext.request().getParam("Adresse");
+            JsonObject request  = new JsonObject().put("name", name).put("adresse", adresse);
+            DeliveryOptions options = new DeliveryOptions().addHeader("action", "changeAdresse");
+            vertx.eventBus().send(EB_ADRESSE, request, options, reply -> {
+                if (reply.succeeded()) {
+                    JsonObject control = (JsonObject) reply.result().body();
+                    if (control.getBoolean("changeAdresseControl").equals("es tut")) {
+                        jo.put("text", "richtig").put("CHANGEadresse","erfolgreich");
+                        LOGGER.info("Adresse erfolgreich geändert");
+                        response.end(Json.encodePrettily(jo));
+                    }
+                    else{
+                        jo.put("CHANGEadresse", Boolean.FALSE);
+                        response.end(Json.encodePrettily(jo));
+                    }
+                    
+                }
+            });
+        }
         else if(typ.equals("Geld")){
             LOGGER.info("Kontostand wird überprüft");
             String name = routingContext.request().getParam("Kontoname");
