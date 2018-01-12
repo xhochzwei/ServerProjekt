@@ -47,7 +47,31 @@ $(document).ready(function () {
                     .append("<br><input type='text' value='Name' id='Itemname'/>")
                     .append("<br><input type='text' value='Preis' id='Itempreis'/>")
                     .append("<input type='button' value='erstellen' id='Itemerstellen'/>")
+            
+                    .append("Delete Item: <br><input type='text' value='Name' id='Itemname2'/>")
+                    .append("<br><input type='button' value='löschen' id='Itemlöschen'/>")
                     .append("<br>OUTPUT:")
+       });
+       $(document).on("click","#Itemlöschen",function(){
+           $.post("../anfrage", {
+                typ: "löscheItem",
+                Itemname: $("#Itemname2").val(),
+            
+            },
+            function(data){
+                if (data.text=="ItemGelöscht"){
+                   
+                        if (data.itemdelete == "ja"){
+                            
+                                     $("body").append("<br>Item wurde gelöscht");
+                        }
+                        if (data.itemdelete == "fehler") {
+                            $("body").append("<br>Fehler beim Löschen!");
+                            
+                        }
+                    
+                }
+            });
        });
        $(document).on("click","#Itemerstellen",function(){
            $.post("../anfrage", {

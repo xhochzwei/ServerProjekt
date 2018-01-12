@@ -22,6 +22,8 @@ public class DatenbankVerticle extends AbstractVerticle {
     private static final String SQL_ÜBERPRÜFE_PASSWORT =        "select passwort from user where name=?";
     private static final String SQL_ÜBERPRÜFE_EXISTENZ_USER =   "select name from user where name=?";
     private static final String SQL_ÜBERPRÜFE_FUNCTION =        "select function from user where name =?";
+    private static final String SQL_DELETE_ITEM =               "delete from item where name =?";
+    private static final String SQL_DELETE_USER =               "delete from user where name =?";
     private static final String SQL_ÜBERPRÜFE_KONTO =           "select money from user where name =?";
     private static final String SQL_ÜBERPRÜFE_ADRESSE =         "select adresse from user where name =?";
     private static final String SQL_DELETE =                    "drop table user";
@@ -82,6 +84,9 @@ public class DatenbankVerticle extends AbstractVerticle {
         String action = message.headers().get("action");
 
         switch (action) {
+            case "löscheItem":
+                löscheItem(message);
+                break;
             case "erstelleItem":
                  erstelleItem(message);
                  break;
@@ -199,27 +204,39 @@ public class DatenbankVerticle extends AbstractVerticle {
             }
          });
     }
-    
+    private void löscheItem(Message<JsonObject> message){
+        String name = message.body().getString("name");
+        dbClient.getConnection(res -> {
+            if(res.succeeded()){
+                SQLConnection connection = res.result();
+                connection.queryWithParams(SQL_DELETE_ITEM, new JsonArray().add(name), lösche ->{
+                    if (lösche.succeeded()) {
+                        message.reply(new JsonObject().put("deleteItem", "success"));
+                    }
+                });
+            }
+        });
+    }
     
     private void erstelleItem(Message<JsonObject> message){
-        LOGGER.info("Shopitem wird erstellt");
+        
         String name = message.body().getString("name");
         String preis2 = message.body().getString("preis");
         int preis = Integer.parseInt(preis2);
         dbClient.getConnection(res -> {
             if (res.succeeded()) {
                 SQLConnection connection = res.result();
-                LOGGER.info("Gibt es das Shopitem schon?");
+                
                 connection.queryWithParams(SQL_ÜBERPRÜFE_ITEMNAME, new JsonArray().add(name), abfrage ->{
             
                     if (abfrage.succeeded()) {
-                        LOGGER.info("Antwort angekommen");
+                       
                         List<JsonArray> liste = abfrage.result().getResults();
                         if (liste.isEmpty()) {
-                            LOGGER.info("Shopitem nicht vorhanden wird erstellt");
+                            
                             connection.execute("insert into item(name,preis) values ('" + name + "','" + preis + "')", erstellen ->{
                                 if (erstellen.succeeded()) {
-                                    LOGGER.info("Das Shopitem: " + name + "wurde erfolgreich erstellt");
+                                  
                                     message.reply(new JsonObject().put("ersItem","ja"));
                                 }
                                 else{

@@ -32,7 +32,7 @@ public class HttpVerticle extends AbstractVerticle {
     private int port = 8080;
     private static final Logger LOGGER = LoggerFactory.getLogger("de.qreator.vertx.VertxDatabase.HttpServer");
     private static final String EB_ADRESSE = "vertxdatabase.eventbus";
-    private static int money;
+
 
     public void start(Future<Void> startFuture) throws Exception {
 
@@ -103,6 +103,7 @@ public class HttpVerticle extends AbstractVerticle {
             response.end(Json.encodePrettily(jo));
             
         }
+        
         else if (typ.equals("erstelleItem")){
             LOGGER.info("Erstelle ein Shopitem");
             String name = routingContext.request().getParam("Itemname");
@@ -201,7 +202,24 @@ public class HttpVerticle extends AbstractVerticle {
                 }
             });
         }
-    
+        else if (typ.equals("löscheItem")){
+            LOGGER.info("lösche Item");
+            String name = routingContext.request().getParam("Itemname");
+            JsonObject request = new JsonObject().put("name", name);
+            DeliveryOptions opt = new DeliveryOptions().addHeader("action", "löscheItem");
+            vertx.eventBus().send(EB_ADRESSE, request, opt, reply ->{
+                if (reply.succeeded()) {
+                    jo.put("text", "ItemGelöscht").put("itemdelete", "ja");
+                    response.end(Json.encodePrettily(jo));
+                    LOGGER.info("löschen erfolgreich");
+                }
+                else{
+                    jo.put("text", "ItemGelöscht").put("itemdelete", "fehler");
+                    response.end(Json.encodePrettily(jo));
+                }
+ 
+            });
+        }
         else if (typ.equals("AEadresse")){
             LOGGER.info("Adresse wird geändert");
             String name = session.get("name");
