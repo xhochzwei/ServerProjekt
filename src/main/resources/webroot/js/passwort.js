@@ -31,14 +31,47 @@ $(document).ready(function () {
                 }
                 if (data.function == '["admin"]') {
                     $("body").html("Herzlich Willkommen auf der Admin Seite<br>")
-                            .append("Überprüfe den Kontostand eines Benutzer: <br><input type='text' value='name' id='Adminname'/>")
+                            .append("Zu den Itemshopeinstellungen<br>")
+                            .append("<input type='button' value='GO' id='Adminshop'/>")
+                            .append("<br>Überprüfe den Kontostand eines Benutzer: <br><input type='text' value='name' id='Adminname'/>")
                             .append("<input type='button' value='OK' id='geld'/>")
+                         
                             .append("<br> OUTPUT:");
                 }
        
         }
     );
     });
+       $(document).on("click", "#Adminshop", function(){
+            $("body").html("Erstelle Hier ein neues Shop Item")
+                    .append("<br><input type='text' value='Name' id='Itemname'/>")
+                    .append("<br><input type='text' value='Preis' id='Itempreis'/>")
+                    .append("<input type='button' value='erstellen' id='Itemerstellen'/>")
+                    .append("<br>OUTPUT:")
+       });
+       $(document).on("click","#Itemerstellen",function(){
+           $.post("../anfrage", {
+                typ: "erstelleItem",
+                Itemname: $("#Itemname").val(),
+                Itempreis: $("#Itempreis").val()
+            },
+            function(data){
+                if (data.text=="Itemerstellt"){
+                   
+                        if (data.itemers == "ja"){
+                            
+                                     $("body").append("<br>Item wurde erstellt");
+                        }
+                        if (data.itemers == "fehler") {
+                            $("body").append("<br>Fehler beim Erstellen!");
+                            
+                        }
+                        if (data.itemers == "nein"){
+                             $("body").append("<br>Dieses Shopitem gibt es schon. Versuchen Sie es mit einem anderen Namen.")
+                        }
+                }
+            });
+       });
        $(document).on("click", "#AEgo", function () {    
            $.post("../anfrage", {
                 typ: "AEadresse",
@@ -79,7 +112,7 @@ $(document).ready(function () {
                     $("body").html("Gratulation, du bist angemeldet!")
                             .append("<br><input type='button' value='Einstellungen' id='funct'/>")
                             .append("<br><input type='button' value='logout' id='logout'/>")
-                            .append("<br><input type='button' value='sop' id='shop'/>");
+                            .append("<br><input type='button' value='shop' id='IDshop'/>")
                 }   else {
                     $("body").append("<br>Die Anmeldedaten waren leider falsch!");
                 }
@@ -143,6 +176,9 @@ $(document).ready(function () {
             }
                     );
           
+        }
+        else {
+            $("body").append("<br>Die Passwörter stimmen nicht überein! Bitte nochmal versuchen");
         }
     });
 });

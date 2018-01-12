@@ -17,7 +17,7 @@ import org.slf4j.LoggerFactory;
 
 public class DatenbankVerticle extends AbstractVerticle {
 
-    private static final String SQL_NEUE_TABELLE_SHOP =         "create table if not exists items(id int auto_increment, name varchar(20) not null, preis int not null";
+    private static final String SQL_NEUE_TABELLE_SHOP =         "create table if not exists item(id int auto_increment, name varchar(20) not null, preis int not null,primary key(name))";
     private static final String SQL_NEUE_TABELLE =              "create table if not exists user(id int auto_increment,name varchar(20) not null, passwort varchar(20) not null,adresse varchar(20) not null,money int not null,function varchar(20) not null,primary key(name))";
     private static final String SQL_ÜBERPRÜFE_PASSWORT =        "select passwort from user where name=?";
     private static final String SQL_ÜBERPRÜFE_EXISTENZ_USER =   "select name from user where name=?";
@@ -26,7 +26,7 @@ public class DatenbankVerticle extends AbstractVerticle {
     private static final String SQL_ÜBERPRÜFE_ADRESSE =         "select adresse from user where name =?";
     private static final String SQL_DELETE =                    "drop table user";
     private static final String USER_EXISTIERT = "USER_EXISITIERT";
-
+    private static final String SQL_ÜBERPRÜFE_ITEMNAME = "select name from item where name =?";
     private static final String EB_ADRESSE = "vertxdatabase.eventbus";
 
     
@@ -41,6 +41,7 @@ public class DatenbankVerticle extends AbstractVerticle {
     private static final Logger LOGGER = LoggerFactory.getLogger("de.qreator.vertx.VertxDatabase.Datenbank");
 
     private JDBCClient dbClient;
+    
 
     public void start(Future<Void> startFuture) throws Exception {
         JsonObject config = new JsonObject()
@@ -49,8 +50,10 @@ public class DatenbankVerticle extends AbstractVerticle {
 
         dbClient = JDBCClient.createShared(vertx, config);
        
-
+        
         Future<Void> datenbankFuture = erstelleDatenbank(); //.compose(db -> erstelleUser("user", "geheim"));
+        
+        erstelleShopDB();
 
         datenbankFuture.setHandler(db -> {
             if (db.succeeded()) {
@@ -67,7 +70,7 @@ public class DatenbankVerticle extends AbstractVerticle {
         });
         
     }
-
+    
     public void onMessage(Message<JsonObject> message) {
 
         if (!message.headers().contains("action")) {
@@ -79,6 +82,9 @@ public class DatenbankVerticle extends AbstractVerticle {
         String action = message.headers().get("action");
 
         switch (action) {
+            case "erstelleItem":
+                 erstelleItem(message);
+                 break;
             case "ueberpruefe-passwort":
                 überprüfeUser(message);
                 break;
@@ -120,7 +126,7 @@ public class DatenbankVerticle extends AbstractVerticle {
 
         });
     }
-
+    
     private Future<Void> erstelleDatenbank() {
 
         Future<Void> erstellenFuture = Future.future();
@@ -172,18 +178,22 @@ public class DatenbankVerticle extends AbstractVerticle {
     }
     
     
-    private void erstelleAngebot(Message<JsonObject> message) {
-        Future<Void> Shop = Future.future();
+    private void  erstelleShopDB() {
+    
+        LOGGER.info("Shop Datenbank wird erstellt");
         
          dbClient.getConnection(res -> {
             if (res.succeeded()) {
                 SQLConnection connection = res.result();
                 connection.execute(SQL_NEUE_TABELLE_SHOP, erstellen ->{
+                    
                     if (erstellen.succeeded()) {
-                        Shop.complete();
+                       
+                        LOGGER.info("Shop Datenbank erfolgreich erstellt!");
                     } else {
+                        
                         LOGGER.error(erstellen.cause().toString());
-                        Shop.fail(erstellen.cause());
+                    
                     }
                 });   
             }
@@ -191,7 +201,50 @@ public class DatenbankVerticle extends AbstractVerticle {
     }
     
     
-    
+    private void erstelleItem(Message<JsonObject> message){
+        LOGGER.info("Shopitem wird erstellt");
+        String name = message.body().getString("name");
+        String preis2 = message.body().getString("preis");
+        int preis = Integer.parseInt(preis2);
+        dbClient.getConnection(res -> {
+            if (res.succeeded()) {
+                SQLConnection connection = res.result();
+                LOGGER.info("Gibt es das Shopitem schon?");
+                connection.queryWithParams(SQL_ÜBERPRÜFE_ITEMNAME, new JsonArray().add(name), abfrage ->{
+            
+                    if (abfrage.succeeded()) {
+                        LOGGER.info("Antwort angekommen");
+                        List<JsonArray> liste = abfrage.result().getResults();
+                        if (liste.isEmpty()) {
+                            LOGGER.info("Shopitem nicht vorhanden wird erstellt");
+                            connection.execute("insert into item(name,preis) values ('" + name + "','" + preis + "')", erstellen ->{
+                                if (erstellen.succeeded()) {
+                                    LOGGER.info("Das Shopitem: " + name + "wurde erfolgreich erstellt");
+                                    message.reply(new JsonObject().put("ersItem","ja"));
+                                }
+                                else{
+                                    message.reply(new JsonObject().put("ersItem", "fehler"));
+                                    LOGGER.error("Fehler beim Einfügen eines Shopitems: " + erstellen.cause());
+                                }
+                            });
+                        }
+                        else{
+                            LOGGER.info("Shopitem existiert schon");
+                            message.reply(new JsonObject().put("ersItem", "existiert"));
+                            
+                        }
+                    }
+                    else{
+                        LOGGER.error("" + abfrage.cause());
+                    }
+ 
+                });
+            }
+            else{
+                LOGGER.error("Verbindung fehlgeschlagen: " + res.cause());
+            }
+        });
+    }
     
     
     

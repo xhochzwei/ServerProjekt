@@ -79,8 +79,7 @@ public class HttpVerticle extends AbstractVerticle {
         
         LOGGER.info("Router für Anfragen");
         String typ = routingContext.request().getParam("typ");
-        String typ2 = routingContext.request().getParam("typ2");
-        String typ3 = routingContext.request().getParam("typ3");
+ 
         HttpServerResponse response = routingContext.response();
         response.putHeader("content-type", "application/json");
         JsonObject jo = new JsonObject();
@@ -102,7 +101,42 @@ public class HttpVerticle extends AbstractVerticle {
                 jo.put("text", "nein");
             }
             response.end(Json.encodePrettily(jo));
-        } else if (typ.equals("anmeldedaten")) {
+            
+        }
+        else if (typ.equals("erstelleItem")){
+            LOGGER.info("Erstelle ein Shopitem");
+            String name = routingContext.request().getParam("Itemname");
+            String preis = routingContext.request().getParam("Itempreis");
+            JsonObject request = new JsonObject().put("name", name).put("preis", preis);
+            DeliveryOptions opt = new DeliveryOptions().addHeader("action", "erstelleItem");
+            vertx.eventBus().send(EB_ADRESSE, request, opt, reply -> {
+                if (reply.succeeded()) {
+                    LOGGER.info("test");
+                   JsonObject body = (JsonObject) reply.result().body();
+                   String result = body.getString("ersItem");
+                    if (result.equals("ja")) {
+                        jo.put("text", "Itemerstellt").put("itemers", "ja");
+                        LOGGER.info("Shopitem erstellt");
+                    }
+                    
+                    else if (result.equals("existiert")){
+                        jo.put("text", "Itemerstellt").put("itemers", "nein");
+                        LOGGER.info("Shopitem existiert");
+                    }
+                    else {
+                        jo.put("text", "Itemerstellt").put("itemers","fehler");
+                        LOGGER.error("Fehler beim Erstellen eines Shopitems");
+                        
+                    }
+                    response.end(Json.encodePrettily(jo));
+                   
+                }
+                
+ 
+            });
+            
+        }
+        else if (typ.equals("anmeldedaten")) {
             String name = routingContext.request().getParam("anmeldename");
             String passwort = routingContext.request().getParam("passwort");
             LOGGER.info("Anmeldeanfrage von User " + name + " mit dem Passwort " + passwort);
