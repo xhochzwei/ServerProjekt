@@ -170,7 +170,31 @@ public class DatenbankVerticle extends AbstractVerticle {
 
         });
     }
-
+    
+    
+    private void erstelleAngebot(Message<JsonObject> message) {
+        Future<Void> Shop = Future.future();
+        
+         dbClient.getConnection(res -> {
+            if (res.succeeded()) {
+                SQLConnection connection = res.result();
+                connection.execute(SQL_NEUE_TABELLE_SHOP, erstellen ->{
+                    if (erstellen.succeeded()) {
+                        Shop.complete();
+                    } else {
+                        LOGGER.error(erstellen.cause().toString());
+                        Shop.fail(erstellen.cause());
+                    }
+                });   
+            }
+         });
+    }
+    
+    
+    
+    
+    
+    
     private void getKonto(Message<JsonObject> message) {
         String name = message.body().getString("name");
         dbClient.getConnection(res -> {

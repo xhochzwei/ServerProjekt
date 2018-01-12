@@ -78,8 +78,9 @@ $(document).ready(function () {
                 if (data.text == "ok") {
                     $("body").html("Gratulation, du bist angemeldet!")
                             .append("<br><input type='button' value='Einstellungen' id='funct'/>")
-                            .append("<br><input type='button' value='logout' id='logout'/>");
-                } else {
+                            .append("<br><input type='button' value='logout' id='logout'/>")
+                            .append("<br><input type='button' value='sop' id='shop'/>");
+                }   else {
                     $("body").append("<br>Die Anmeldedaten waren leider falsch!");
                 }
             }
@@ -102,7 +103,9 @@ $(document).ready(function () {
 
                     } else {
                         $("body").html("Gratulation, du bist angemeldet!")
-                                .append("<br><input type='button' value='logout' id='logout'/>");
+                                 .append("<br><input type='button' value='Einstellungen' id='funct'/>")
+                                 .append("<br><input type='button' value='logout' id='logout'/>")
+                                 .append("<br><input type='button' value='sop' id='shop'/>");
                     }
                 }
             }

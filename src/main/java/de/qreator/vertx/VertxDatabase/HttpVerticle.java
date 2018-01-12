@@ -237,6 +237,24 @@ public class HttpVerticle extends AbstractVerticle {
                 }
             });
         }
+        /*else if (typ.equals("shop")){
+            LOGGER.info("shop wird aufgerufen");
+            
+            DeliveryOptions options = new DeliveryOptions().addHeader("action", "getKonto");
+            int kontostand=dbkonto.getString("konto");
+            vertx.eventBus().send(EB_ADRESSE, request, options, reply -> {
+                if (reply.succeeded()) {
+                    if (kontostand>preis){
+                       set kontostand=kontostand-preis;
+                    }else{
+                        
+                    }
+                }
+                
+            });
+        }*/
+        
+        
         else if (typ.equals("logout")) {
             LOGGER.info("Logout-Anfrage");
             session.put("angemeldet", null).put("name", null);
