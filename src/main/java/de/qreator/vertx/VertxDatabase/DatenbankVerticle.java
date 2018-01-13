@@ -84,6 +84,10 @@ public class DatenbankVerticle extends AbstractVerticle {
         String action = message.headers().get("action");
 
         switch (action) {
+            case "Shopausgeben":
+                Shopausgeben(message);
+                break
+            
             case "löscheItem":
                 löscheItem(message);
                 break;
@@ -204,6 +208,26 @@ public class DatenbankVerticle extends AbstractVerticle {
             }
          });
     }
+    private void  Shopausgeben(Message<JsonObject> message) {
+        String name = message.body().getString("search");
+        dbClient.getConnection(res -> {
+            if (res.succeeded()) {
+                 SQLConnection connection = res.result();
+                connection.queryWithParams(SQL_NEUE_TABELLE_SHOP, new JsonArray().add(name), abfrage ->{
+                     if (abfrage.succeeded()) {
+                         LOGGER.info("In der Datenbank sind Einträge");
+                         List<JsonArray> liste = abfrage.result().getResults();
+                         if (liste.isEmpty()) {
+                             LOGGER.info("ein solches Item existiert nicht");
+                         }
+                     }else{
+                         LOGGER.info("In der Datenbank sind Einträge");
+                     }
+                });
+            }
+        });
+    }
+    
     private void löscheItem(Message<JsonObject> message){
         String name = message.body().getString("name");
         dbClient.getConnection(res -> {
