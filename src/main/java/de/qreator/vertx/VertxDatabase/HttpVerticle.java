@@ -289,22 +289,25 @@ public class HttpVerticle extends AbstractVerticle {
                 }
             });
         }
-        /*else if (typ.equals("shop")){
+        else if (typ.equals("Shopoffnen")){
             LOGGER.info("shop wird aufgerufen");
             
             DeliveryOptions options = new DeliveryOptions().addHeader("action", "getKonto");
-            int kontostand=dbkonto.getString("konto");
-            vertx.eventBus().send(EB_ADRESSE, request, options, reply -> {
+            vertx.eventBus().send(EB_ADRESSE, options, reply -> {
                 if (reply.succeeded()) {
-                    if (kontostand>preis){
+                    JsonObject dbkonto = (JsonObject) reply.result().body();
+                    String konto = dbkonto.getString("konto");
+                    jo.put("konto", konto);
+                     response.end(Json.encodePrettily(jo));
+                    /*if (kontostand>preis){
                        set kontostand=kontostand-preis;
                     }else{
                         
-                    }
+                    }*/
                 }
                 
             });
-        }*/
+        }
         
         
         else if (typ.equals("logout")) {
