@@ -199,7 +199,7 @@ $(document).ready(function () {
                 },
                         function(data){
                            
-                                if (data.ItemPreis2 == "nonexistent"){
+                                if (data.ItemPreis == "nonexistent"){
                                     $("body").append("<br>Diesen Artikel gibt es nicht")
                                 }
                                 else{

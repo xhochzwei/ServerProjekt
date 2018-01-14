@@ -188,7 +188,7 @@ public class DatenbankVerticle extends AbstractVerticle {
                
                 connection.queryStreamWithParams(SQL_ÜBERPRÜFE_PREIS, new JsonArray().add(itemname), ab ->{
                     if (ab.succeeded()) {
-                        String zeilen = ab.result().toString();
+                        String zeilen = abfrage.result().toString();
                         LOGGER.info(zeilen);
                        
                             message.reply(new JsonObject().put("ItemPreis", zeilen));
