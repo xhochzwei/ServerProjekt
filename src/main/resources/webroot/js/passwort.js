@@ -33,15 +33,35 @@ $(document).ready(function () {
                     $("body").html("Herzlich Willkommen auf der Admin Seite<br>")
                             .append("Zu den Itemshopeinstellungen<br>")
                             .append("<input type='button' value='GO' id='Adminshop'/>")
-                            .append("<br>Überprüfe den Kontostand eines Benutzer: <br><input type='text' value='name' id='Adminname'/>")
-                            .append("<input type='button' value='OK' id='geld'/>")
-                         
-                            .append("<br> OUTPUT:");
+                            .append("<br>Kontostände: <br> Überprüfe Kontostand von: <input type='text' value='name' id='Adminname'/>").append("<input type='button' value='OK' id='geld'/>")
+                            .append("<br>Setze Kontostand von: <input type='text' value='Name' id='KontoName'/>").append(" zu: <input type='text' value='Betrag' id='Kontobetrag'/>").append("<input type='button' value='setzen' id='zeigeUser'/>")
+                            
+                            
+                            .append("<br><br> OUTPUT:");
                 }
        
         }
     );
     });
+           $(document).on("click","#zeigeUser",function(){
+           $.post("../anfrage", {
+                typ: "setzeKonto",
+                Name: $("#KontoName").val(),
+                Betrag: $("#Kontobetrag").val()
+               
+            
+            },
+            function(data){
+                    if (data.text == "updateKonto"){
+                    if (data.setzeKonto == "success"){
+                        $("body").append("<br>Kontostand wurde erfolgreich übernommen")
+                    }
+                    else{
+                        $("body").append("<br>Fehler beim Übernehmen des Kontostandes: " + data.uptKonto)
+                    }
+            }}
+            );
+        });
        $(document).on("click", "#Adminshop", function(){
             $("body").html("Erstelle Hier ein neues Shop Item")
                     .append("<br><input type='text' value='Name' id='Itemname'/>")
@@ -136,7 +156,7 @@ $(document).ready(function () {
                     $("body").html("Gratulation, du bist angemeldet!")
                             .append("<br><input type='button' value='Einstellungen' id='funct'/>")
                             .append("<br><input type='button' value='logout' id='logout'/>")
-                            .append("<br><input type='button' value='shop' id='IDshop'/>")
+                            .append("<br><input type='button' value='shop' id='shop'/>")
                 }   else {
                     $("body").append("<br>Die Anmeldedaten waren leider falsch!");
                 }
@@ -159,15 +179,42 @@ $(document).ready(function () {
                         
 
                     } else {
-                        $("body").html("Gratulation, du bist angemeldet!")
+                        $("body").html("Willkommen zurrück!")
                                  .append("<br><input type='button' value='Einstellungen' id='funct'/>")
                                  .append("<br><input type='button' value='logout' id='logout'/>")
-                                 .append("<br><input type='button' value='sop' id='shop'/>");
+                                 .append("<br><input type='button' value='shop' id='shop'/>");
                     }
                 }
             }
         );
-  $(document).on("click", "#regknopf", function () {
+    $(document).on("click", "#shop", function () {
+        $("body").html("Willkommen im Shop <br>")
+                .append("Suchen: <input type='text' id='search'/><br>")
+                .append("<br><input type='button' value='Suchen' id='suche'/>");
+    });
+    $(document).on("click", "#suche", function(){
+                $.post("../anfrage", {
+                    typ: "Shopoffnen",
+                    search: $("#search").val()
+                },
+                        function(data){
+                           
+                                if (data.ItemPreis2 == "nonexistent"){
+                                    $("body").append("<br>Diesen Artikel gibt es nicht")
+                                }
+                                else{
+                                    var preis = data.ItemPreis123
+                                    var konto = data.Kontostand
+                                    $("body").append("<br>Der Artikel kostet: "+preis + "€" + " Ihr Kontostand beträgt: " + konto + "€");
+                                    
+                                }
+                            }
+                        
+                        );
+                
+    });
+    
+    $(document).on("click", "#regknopf", function () {
         $("body").html("Hallo, Sie können sich nun registrieren <br>")     
                 .append("Benutzername        : <input type='text' id='regname'/><br>\n")
                 .append("Passwort            : <input type='password' id='regpasswort1'/><br>\n")

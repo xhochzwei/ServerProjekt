@@ -137,6 +137,29 @@ public class HttpVerticle extends AbstractVerticle {
             });
             
         }
+                else if (typ.equals("setzeKonto")){
+            LOGGER.info("Setze Kontostand");
+            String name = routingContext.request().getParam("Name");
+            String Betrag = routingContext.request().getParam("Betrag");
+            int konto = Integer.parseInt(Betrag);
+            DeliveryOptions opt = new DeliveryOptions().addHeader("action", "uptKonto");
+            
+            JsonObject request = new JsonObject().put("name", name).put("konto", konto);
+            vertx.eventBus().send(EB_ADRESSE,request, opt, reply ->{
+                if (reply.succeeded()) {
+                    jo.put("text", "updateKonto").put("setzeKonto", "success");
+                    LOGGER.info("Kontostand update war erfolgreich");
+            response.end(Json.encodePrettily(jo));
+                }
+                else{
+                    JsonObject save = (JsonObject) reply.result().body();
+                    String result = save.getString("uptKonto");
+                    jo.put("text", "updateKonto").put("setzeKonto", result);
+                    LOGGER.error("Fehler beim Setzen des Kontostandes" + reply.cause());
+                    response.end(Json.encodePrettily(jo));
+                }
+            });
+        }
         else if (typ.equals("anmeldedaten")) {
             String name = routingContext.request().getParam("anmeldename");
             String passwort = routingContext.request().getParam("passwort");
@@ -291,21 +314,39 @@ public class HttpVerticle extends AbstractVerticle {
         }
         else if (typ.equals("Shopoffnen")){
             LOGGER.info("shop wird aufgerufen");
+            String username = session.get("name");
             
+            String Gegenstand1 = routingContext.request().getParam("search"); 
+            
+            JsonObject request = new JsonObject().put("name", username);
             DeliveryOptions options = new DeliveryOptions().addHeader("action", "getKonto");
-            vertx.eventBus().send(EB_ADRESSE, options, reply -> {
+            LOGGER.info("Suchanfrage angekommen");
+            vertx.eventBus().send(EB_ADRESSE, request ,options,  reply -> {
                 if (reply.succeeded()) {
                     JsonObject dbkonto = (JsonObject) reply.result().body();
                     String konto = dbkonto.getString("konto");
-                    jo.put("konto", konto);
-                     response.end(Json.encodePrettily(jo));
-                    /*if (kontostand>preis){
-                       set kontostand=kontostand-preis;
-                    }else{
-                        
-                    }*/
+                    jo.put("Kontostand", konto);
+                    
+                    
                 }
                 
+            });
+            JsonObject Gegenstand = new JsonObject().put("Gegenstand", Gegenstand1);
+            DeliveryOptions opt = new DeliveryOptions().addHeader("action", "getPreis");
+            vertx.eventBus().send(EB_ADRESSE, Gegenstand, opt, abfrage -> {
+                if (abfrage.succeeded()) {
+                  JsonObject pr  =  (JsonObject) abfrage.result().body();
+                    if (pr.getString("ItemPreis").equals("nonexistent")) {
+                        jo.put("ItemPreis", "nonexistent");
+                        response.end(Json.encodePrettily(jo));
+                    }
+                    else{
+                        String a = pr.getString("ItemPreis");
+                        jo.put("ItemPreis123", a);
+                        
+                        response.end(Json.encodePrettily(jo));
+                    }
+                }
             });
         }
         
